@@ -1,0 +1,67 @@
+import socket
+
+HOST = "192.168.250.239"#要改電腦的IP位址
+PORT = 8000
+
+
+def send_request(request):
+    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client.connect((HOST, PORT))
+    client.sendall(request.encode())
+
+    response = b""
+    while True:
+        data = client.recv(4096)
+        if not data:
+            break
+        response += data
+
+    client.close()
+    return response
+
+
+# ===== 1. GET / 測試 =====
+print("===== GET / =====")
+
+get_request = (
+    "GET / HTTP/1.1\r\n"
+    "Host: localhost\r\n"
+    "\r\n"
+)
+
+response = send_request(get_request)
+print(response.decode(errors="ignore"))
+
+
+# ===== 2. POST / 測試 =====
+print("\n===== POST / =====")
+
+post_data = "message=HelloServer"
+post_request = (
+    "POST / HTTP/1.1\r\n"
+    "Host: localhost\r\n"
+    "Content-Type: application/x-www-form-urlencoded\r\n"
+    f"Content-Length: {len(post_data)}\r\n"
+    "\r\n"
+    + post_data
+)
+
+response = send_request(post_request)
+print(response.decode(errors="ignore"))
+
+
+# ===== 3. GET /image 測試 =====
+print("\n===== GET /image =====")
+
+image_request = (
+    "GET /image HTTP/1.1\r\n"
+    "Host: localhost\r\n"
+    "\r\n"
+)
+
+response = send_request(image_request)
+
+# 只印出 header（避免圖片亂碼）
+header, _, body = response.partition(b"\r\n\r\n")
+print(header.decode(errors="ignore"))
+print(f"[Image data received: {len(body)} bytes]")
